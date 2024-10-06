@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earth Quiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+        body {
+            font-family: "Orbitron", sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+        }
+
+        #earth-img {
+            width: 200px;
+            height: auto;
+        }
+        #earth-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #quiz-container {
+            display: none;
+        }
+        #animation-container {
+            display: none; /* Hide the animation container by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mt-5">Earth Quiz</h1>
+        
+        <div id="start-container" class="text-center mt-4">
+            <button id="start-btn" class="btn btn-success">Start Quiz</button>
+        </div>
+
+        <div id="quiz-container" class="mt-4">
+            <!-- Quiz questions will be inserted here -->
+        </div>
+        
+        <div class="progress mt-4">
+            <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+
+        <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script> 
+
+        <div style="position: relative; width: 100%; height: 300px; display: flex; justify-content: center; align-items: center;">
+            <dotlottie-player id="explosion-animation" src="https://lottie.host/d90fcc05-aa26-4726-ac11-e1fd99b3bb7b/dK4Kc0k1ye.json" background="transparent" speed="1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 100;" loop autoplay></dotlottie-player> <!-- explode animation -->
+            <dotlottie-player id="earth-animation" src="https://lottie.host/8a7bc5b7-1b22-4c7e-9965-c323b9e934b2/uaLRT8WJp0.json" background="transparent" speed="1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;" loop autoplay></dotlottie-player>
+            <dotlottie-player id="firework-animation" src="https://lottie.host/f17db355-65f2-4826-bfe5-bde46148a46c/6oxr6LvZcO.json" background="transparent" speed="1" style="width: 300px; height: 300px; display: none;" loop autoplay></dotlottie-player>
+        </div>
+        
+        <audio id="explosion-sound" src="./assets\/11L-cinematic_explosion-36368170.mp3"></audio>
+        <audio id="victory-sound" src="./assets/tv-talk-show-intro-theme-richard-bodgers-1-00-10.mp3"></audio>
+
+        <div style="display: flex;">
+            <a href="index.html" class="btn btn-primary mt-4" style="margin-right: 10px;"> <- Back Home</a>
+            <button id="restart-btn" class="btn btn-primary mt-4" style="display: none;">Restart</button>
+        </div>
+    </div>
+
+    <audio id="click-sound" src="./assets/spacebar-click-keyboard-199448.mp3"></audio>
+
+    <script>
+        const questions = [
+            {
+                question: "What causes geomagnetic storms?",
+                answers: ["Earthquakes", "Solar flares", "Volcanic eruptions", "Tidal forces"],
+                correct: 1
+            },
+            {
+                question: "Which of the following is NOT a potential effect of a geomagnetic storm?",
+                answers: ["Auroras", "Power outages", "Communication disruptions", "Increased plant growth"],
+                correct: 3
+            },
+            {
+                question: "Where is the Earth's magnetic field generated?",
+                answers: ["The crust", "The mantle", "The outer core", "The ionosphere"],
+                correct: 2
+            },
+            {
+                question: "How long can a geomagnetic storm last?",
+                answers: ["A few minutes", "A few hours", "Several days", "Several months"],
+                correct: 2
+            },
+            {
+                question: "Which space agency is primarily responsible for monitoring solar activity and predicting geomagnetic storms?",
+                answers: ["European Space Agency (ESA)", "National Aeronautics and Space Administration (NASA)", "Japan Aerospace Exploration Agency (JAXA)", "Roscosmos (Russian space agency)"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let progress = 0;
+
+        const quizContainer = document.getElementById('quiz-container');
+        const progressBar = document.getElementById('progress-bar');
+        const restartBtn = document.getElementById('restart-btn');
+        const startBtn = document.getElementById('start-btn');
+        const startContainer = document.getElementById('start-container');
+        const explosionAnimation = document.getElementById('explosion-animation');
+        const earthAnimation = document.getElementById('earth-animation');
+        const fireworkAnimation = document.getElementById('firework-animation');
+        const explosionSound = document.getElementById('explosion-sound');
+        const victorySound = document.getElementById('victory-sound');
+
+        function loadQuestion() {
+            quizContainer.innerHTML = ''; // Clear previous content
+
+            if (currentQuestionIndex < questions.length) {
+                const questionData = questions[currentQuestionIndex];
+                
+                const questionTitle = document.createElement('h3');
+                questionTitle.textContent = questionData.question;
+                quizContainer.appendChild(questionTitle);
+                
+                questionData.answers.forEach((answer, index) => {
+                    const answerBtn = document.createElement('button');
+                    answerBtn.classList.add('btn', 'btn-outline-primary', 'd-block', 'mt-2');
+                    answerBtn.textContent = answer;
+                    answerBtn.onclick = () => checkAnswer(index);
+                    quizContainer.appendChild(answerBtn);
+                });
+            } else {
+                showResult();
+            }
+        }
+
+        function checkAnswer(selectedIndex) {
+            const questionData = questions[currentQuestionIndex];
+
+            if (selectedIndex === questionData.correct) {
+                score++;
+                progress += 20; // 5 questions, so each is worth 25%
+            } else {
+                progress -= 5; // Penalty for incorrect answer
+            }
+
+            updateProgress();
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function updateProgress() {
+            progress = Math.max(0, Math.min(100, progress)); // Keep progress between 0 and 100%
+            progressBar.style.width = `${progress}%`;
+            progressBar.textContent = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+
+        function showResult() {
+            quizContainer.innerHTML = '';
+
+            if (score >= 3) {
+                quizContainer.innerHTML = '<h3 class="text-success">You saved Earth! 🌍</h3>';
+                victorySound.play(); 
+                explosionAnimation.style.display = 'none'; // Hide explosion animation if they win
+                earthAnimation.style.display = 'block'; // Show explosion animation if they lose
+                earthAnimation.play(); 
+                fireworkAnimation.style.display = 'block';
+                fireworkAnimation.play();
+            } else {
+                quizContainer.innerHTML = '<h3 class="text-danger">Earth exploded! 💥</h3>';
+                explosionSound.play(); 
+                earthAnimation.style.display = 'none'; // Hide explosion animation if they win
+                fireworkAnimation.style.display = 'none';
+                explosionAnimation.style.display = 'block'; // Show explosion animation if they lose
+                explosionAnimation.play(); // Ensure the animation plays
+            }
+
+            restartBtn.style.display = 'block';
+        }
+
+        restartBtn.onclick = () => {
+            resetQuiz();
+            shuffleQuestionsAndAnswers(); // Shuffle on restart
+            startQuiz();
+        };
+
+        startBtn.onclick = () => {
+            resetQuiz();
+            shuffleQuestionsAndAnswers(); // Shuffle when starting the quiz
+            startQuiz();
+        };
+
+        function startQuiz() {
+            startContainer.style.display = 'none'; // Hide the start button
+            quizContainer.style.display = 'block'; // Show the quiz
+            loadQuestion();
+        }
+
+        function resetQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            progress = 0;
+            restartBtn.style.display = 'none';
+            updateProgress();
+            explosionAnimation.style.display = 'none';
+            fireworkAnimation.style.display = 'none';
+            earthAnimation.style.display = 'block'; // Hide explosion animation when resetting
+        }
+
+        // Shuffle questions and answers
+        function shuffleQuestionsAndAnswers() {
+            questions.sort(() => Math.random() - 0.5);
+        }
+
+        // Get the audio element
+        const audio = document.getElementById('click-sound');
+
+        // Add click event listener to the document
+        document.addEventListener('click', function() {
+            audio.currentTime = 0; // Reset sound to the beginning
+            audio.play(); // Play the sound
+        });
+
+    </script>
+</body>
+</html>
